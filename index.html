@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#faf9f6" />
+    <title>Ta place ✨</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --ink: #1c1b1a;
+        --soft: #8a8784;
+        --accent: #e8632c;
+        --bg: #faf9f6;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Deux halos de couleur très doux, animés lentement */
+      .blob {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(90px);
+        opacity: 0.5;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .blob-1 {
+        width: 55vmax;
+        height: 55vmax;
+        background: radial-gradient(circle, #ffd9a8 0%, transparent 70%);
+        top: -18vmax;
+        left: -15vmax;
+        animation: drift1 14s ease-in-out infinite alternate;
+      }
+      .blob-2 {
+        width: 50vmax;
+        height: 50vmax;
+        background: radial-gradient(circle, #cfe3ff 0%, transparent 70%);
+        bottom: -18vmax;
+        right: -12vmax;
+        animation: drift2 16s ease-in-out infinite alternate;
+      }
+      @keyframes drift1 {
+        to {
+          transform: translate(6vmax, 5vmax) scale(1.08);
+        }
+      }
+      @keyframes drift2 {
+        to {
+          transform: translate(-5vmax, -6vmax) scale(1.1);
+        }
+      }
+
+      main {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .eyebrow {
+        font-size: 13px;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        color: var(--soft);
+        animation: fadeDown 0.8s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .spark {
+        color: var(--accent);
+        margin-right: 0.4em;
+        display: inline-block;
+        animation: sparkSpin 2.4s ease-in-out infinite;
+      }
+      @keyframes sparkSpin {
+        0%,
+        100% {
+          transform: rotate(0deg) scale(1);
+        }
+        50% {
+          transform: rotate(12deg) scale(1.25);
+        }
+      }
+
+      #name {
+        font-size: clamp(3.4rem, 16vw, 9rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        margin: 18px 0 26px;
+        max-width: 95vw;
+        overflow-wrap: break-word;
+      }
+
+      #name .letter {
+        display: inline-block;
+        white-space: pre;
+        opacity: 0;
+        transform: translateY(0.45em);
+        filter: blur(6px);
+        animation: letterIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      @keyframes letterIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+          filter: blur(0);
+        }
+      }
+
+      .rule {
+        width: 64px;
+        height: 3px;
+        background: var(--accent);
+        border-radius: 99px;
+        transform: scaleX(0);
+        transform-origin: left;
+        animation: ruleIn 0.6s 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      @keyframes ruleIn {
+        to {
+          transform: scaleX(1);
+        }
+      }
+
+      .hint {
+        margin-top: 26px;
+        font-size: 15px;
+        color: var(--soft);
+        max-width: 34ch;
+        animation: fadeUp 0.9s 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      @keyframes fadeDown {
+        from {
+          opacity: 0;
+          transform: translateY(-12px);
+        }
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+      }
+
+      /* Le prénom est souligné d'un surlignage doux à la fin */
+      .name-highlight {
+        background: linear-gradient(transparent 62%, #ffe3c9 62%);
+        padding: 0 0.08em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="blob blob-1" aria-hidden="true"></div>
+    <div class="blob blob-2" aria-hidden="true"></div>
+    <main>
+      <p class="eyebrow"><span class="spark">✦</span>Joyeux anniversaire</p>
+      <h1 id="name"></h1>
+      <div class="rule" aria-hidden="true"></div>
+      <p class="hint" id="hint"></p>
+    </main>
+
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var raw = (params.get("prenom") || "").trim().slice(0, 30);
+        var nameEl = document.getElementById("name");
+        var hintEl = document.getElementById("hint");
+
+        function setHint(text) {
+          // textContent : aucun risque d'injection, quelle que soit l'URL
+          hintEl.textContent = text;
+        }
+
+        if (!raw) {
+          nameEl.style.fontSize = "clamp(1.6rem, 6vw, 3rem)";
+          nameEl.textContent = "Scanne ton QR code ✨";
+          setHint("Ajoute ?prenom=Marie à l'adresse pour tester.");
+          return;
+        }
+
+        // Capitalisation douce : première lettre en majuscule, reste intact
+        var prenom = raw.charAt(0).toUpperCase() + raw.slice(1);
+
+        // Chaque lettre devient un span animé, décalé de 55 ms
+        for (var i = 0; i < prenom.length; i++) {
+          var span = document.createElement("span");
+          span.className = "letter";
+          span.textContent = prenom[i];
+          span.style.animationDelay = 0.15 + i * 0.055 + "s";
+          if (i === 0) span.classList.add("name-highlight");
+          nameEl.appendChild(span);
+        }
+
+        setHint("C'est ta place à table ce soir — garde-la précieusement.");
+      })();
+    </script>
+  </body>
+</html>
