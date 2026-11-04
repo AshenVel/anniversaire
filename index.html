@@ -56,7 +56,7 @@
       .blob-1 {
         width: 55vmax;
         height: 55vmax;
-        background: radial-gradient(circle, #ffd9a8 0%, transparent 70%);
+        background: radial-gradient(circle, #ffd9a8 0%, transparent 40%);
         top: -18vmax;
         left: -15vmax;
         animation: drift1 14s ease-in-out infinite alternate;
@@ -64,11 +64,12 @@
       .blob-2 {
         width: 50vmax;
         height: 50vmax;
-        background: radial-gradient(circle, #cfe3ff 0%, transparent 70%);
+        background: radial-gradient(circle, #cfe3ff 80%, transparent 80%);
         bottom: -18vmax;
         right: -12vmax;
         animation: drift2 16s ease-in-out infinite alternate;
       }
+
       @keyframes drift1 {
         to {
           transform: translate(6vmax, 5vmax) scale(1.08);
@@ -80,9 +81,18 @@
         }
       }
 
+      #fireworks {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
+
       main {
         position: relative;
-        z-index: 1;
+        z-index: 2;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -179,6 +189,7 @@
   <body>
     <div class="blob blob-1" aria-hidden="true"></div>
     <div class="blob blob-2" aria-hidden="true"></div>
+    <canvas id="fireworks" aria-hidden="true"></canvas>
     <main>
       <p class="eyebrow"><span class="spark">✦</span>Bienvenue !</p>
       <h1 id="name"></h1>
@@ -218,6 +229,196 @@
         }
 
         setHint("C'est ta place à table ce soir, garde-la précieusement !");
+      })();
+    </script>
+    
+    <script>
+      /* ----- Feux d'artifice ----- */
+      (function () {
+        // On respecte la préférence "réduire les animations"
+        if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          return;
+        }
+
+        var canvas = document.getElementById("fireworks");
+        var ctx = canvas.getContext("2d");
+        var W, H;
+
+        function resize() {
+          var dpr = Math.min(window.devicePixelRatio || 1, 2);
+          W = window.innerWidth;
+          H = window.innerHeight;
+          canvas.width = W * dpr;
+          canvas.height = H * dpr;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+        window.addEventListener("resize", resize);
+        resize();
+
+        
+        var COLORS = ["#ff6b35", "#f7b32b", "#e63946", "#ff8fa3", "#ffd166"];
+
+        var rockets = [];
+        var sparks = [];
+        var flashes = []; 
+
+        // Convertit "#e8632c" + opacité en "rgba(...)" pour les halos lumineux
+        function hexA(hex, alpha) {
+          return (
+            "rgba(" +
+            parseInt(hex.slice(1, 3), 16) + "," +
+            parseInt(hex.slice(3, 5), 16) + "," +
+            parseInt(hex.slice(5, 7), 16) + "," +
+            alpha + ")"
+          );
+}
+        
+
+        function spawnRocket() {
+          // Plafond d'étincelles : la page reste fluide même sur vieux téléphones
+          if (sparks.length > 380) return;
+          rockets.push({
+            x: W * (0.15 + Math.random() * 0.7),
+            y: H + 10,
+            vy: -(H * 0.011 + Math.random() * 2.5),
+            targetY: H * (0.12 + Math.random() * 0.3),
+            color: COLORS[(Math.random() * COLORS.length) | 0],
+          });
+        }
+
+        function explode(r) {
+          // Éclat de lumière au moment de l'explosion
+          flashes.push({ x: r.x, y: r.y, life: 1, color: r.color });
+
+          var n = 40 + ((Math.random() * 35) | 0);
+          for (var i = 0; i < n; i++) {
+            var a = Math.random() * Math.PI * 2;
+            var v = 1 + Math.random() * 5.5;
+            sparks.push({
+            x: r.x,
+            y: r.y,
+            px: r.x,                              // ← position précédente, pour la traînée
+            py: r.y,
+            vx: Math.cos(a) * v,
+            vy: Math.sin(a) * v,
+            life: 1,
+            decay: 0.006 + Math.random() * 0.012,
+            size: 0.8 + Math.random() * 1.2,      // ← épaisseurs variées
+            color: r.color,
+            twinkle: Math.random() < 0.35,        // ← 35 % des particules scintillent
+            });
+          }
+        }
+
+        var running = false;
+
+        function frame() {
+          ctx.clearRect(0, 0, W, H);
+
+          // Fusées montantes : tête lumineuse + braises qui s'échappent
+          for (var i = rockets.length - 1; i >= 0; i--) {
+           var r = rockets[i];
+          r.y += r.vy;
+
+          // petites braises tombant de la fusée
+          if (Math.random() < 0.5) {
+            sparks.push({
+            x: r.x, y: r.y + 4, px: r.x, py: r.y + 4,
+            vx: (Math.random() - 0.5) * 0.6,
+            vy: 0.4,
+            life: 0.5, decay: 0.04, size: 0.6,
+            color: "#ffb4a2", twinkle: false,
+            });
+          }
+
+          var glow = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 7);
+          glow.addColorStop(0, hexA(r.color, 0.8));
+          glow.addColorStop(1, hexA(r.color, 0));
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = r.color;
+          ctx.fillRect(r.x - 0.75, r.y, 1.5, 7);   // traînée fine
+
+          if (r.y <= r.targetY) {
+            explode(r);
+            rockets.splice(i, 1);
+          }
+          }
+
+          // Étincelles retombantes : traits arrondis, fines traînées
+          for (var j = sparks.length - 1; j >= 0; j--) {
+            var s = sparks[j];
+            s.px = s.x;
+            s.py = s.y;
+            s.x += s.vx;
+            s.y += s.vy;
+            s.vy += 0.045;
+            s.vx *= 0.985;
+            s.vy *= 0.985;
+            s.life -= s.decay;
+            if (s.life <= 0) {
+              sparks.splice(j, 1);
+              continue;
+            }
+            var alpha = s.life;
+            if (s.twinkle && Math.random() < 0.25) {
+              alpha *= 0.25;   // scintillement
+            }
+            ctx.globalAlpha = Math.max(alpha, 0);
+            ctx.strokeStyle = s.color;
+            ctx.lineWidth = 0.4 + s.size * s.life;   // le trait s'affine en s'éteignant
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(s.px, s.py);
+            ctx.lineTo(s.x, s.y);
+            ctx.stroke();
+          }
+
+          // Éclats de lumière : halo coloré qui s'étend puis s'estompe (~0,3 s)
+          for (var f = flashes.length - 1; f >= 0; f--) {
+            var fl = flashes[f];
+            fl.life -= 0.06;
+            if (fl.life <= 0) {
+              flashes.splice(f, 1);
+              continue;
+            }
+            var radius = 25 + (1 - fl.life) * 70;
+            var halo = ctx.createRadialGradient(fl.x, fl.y, 0, fl.x, fl.y, radius);
+            halo.addColorStop(0, hexA(fl.color, 0.5 * fl.life));
+            halo.addColorStop(1, hexA(fl.color, 0));
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = halo;
+            ctx.beginPath();
+            ctx.arc(fl.x, fl.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.globalAlpha = 1;
+          requestAnimationFrame(frame);
+        }
+
+        function salve() {
+          if (!running) {
+            running = true;
+            frame();
+          }
+          var k = 2 + ((Math.random() * 2) | 0);
+          for (var i = 0; i < k; i++) {
+            setTimeout(spawnRocket, i * 350 + Math.random() * 200);
+          }
+        }
+
+        // Première salve juste après la révélation du prénom, puis salves espacées
+        setTimeout(salve, 1200);
+        (function loop() {
+          setTimeout(function () {
+            salve();
+            loop();
+          }, 3800 + Math.random() * 3200);
+        })();
       })();
     </script>
   </body>
