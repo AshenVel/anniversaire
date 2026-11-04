@@ -8,7 +8,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Great+Vibes&display=swap" rel="stylesheet" />
     <style>
       * {
         margin: 0;
@@ -17,6 +17,8 @@
       }
 
       :root {
+        color-scheme: only light;
+
         --ink: #1c1b1a;
         --soft: #8a8784;
         --accent: #e8632c;
@@ -111,10 +113,11 @@
       }
 
       #name {
+        font-family: "Great Vibes", cursive;
         font-size: clamp(3.4rem, 16vw, 9rem);
-        font-weight: 700;
-        line-height: 1.05;
-        letter-spacing: -0.03em;
+        font-weight: 400;
+        line-height: 1.3;
+        letter-spacing: normal;
         margin: 18px 0 26px;
         max-width: 95vw;
         overflow-wrap: break-word;
@@ -171,12 +174,6 @@
           transform: translateY(12px);
         }
       }
-
-      /* Le prénom est souligné d'un surlignage doux à la fin */
-      .name-highlight {
-        background: linear-gradient(transparent 62%, #ffe3c9 62%);
-        padding: 0 0.08em;
-      }
     </style>
   </head>
   <body>
@@ -217,7 +214,6 @@
           span.className = "letter";
           span.textContent = prenom[i];
           span.style.animationDelay = 0.15 + i * 0.055 + "s";
-          if (i === 0) span.classList.add("name-highlight");
           nameEl.appendChild(span);
         }
 
